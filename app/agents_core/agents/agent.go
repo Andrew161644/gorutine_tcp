@@ -2,17 +2,20 @@ package agents
 
 import (
 	"log"
+	"net"
 )
 
-type Commands struct {
+type CommandEvent struct {
+	Conn    *net.Conn
 	Command map[string]interface{}
 }
 
 type IAgent interface {
 	GetId() string
 	GetStop() *chan struct{}
+	PushCommand(commands CommandEvent)
 	Unsubscribe()
-	Handle(event Commands)
+	Handle(commands CommandEvent)
 }
 
 type Agent struct {
@@ -33,22 +36,18 @@ func (r *Agent) GetStop() *chan struct{} {
 	return &r.Stop
 }
 
-func (*Agent) Handle(event Commands) {
-	log.Println("Base handler, trying execute: ", event.Command)
+func (*Agent) Handle(command CommandEvent) {
+	log.Println("Base agent, trying execute: ", command.Command)
 }
 
-type RabbitHandlerPlus struct {
-	Agent
-}
-
-func (*RabbitHandlerPlus) Handle(event Commands) {
+func (a *Agent) PushCommand(command CommandEvent) {
 
 }
 
-type RabbitHandlerMinus struct {
-	Agent
-}
-
-func (*RabbitHandlerMinus) Handle(event Commands) {
-
+func (c *CommandEvent) GetCommandName() string {
+	var keys []string
+	for s := range c.Command {
+		keys = append(keys, s)
+	}
+	return keys[0]
 }

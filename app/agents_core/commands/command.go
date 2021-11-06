@@ -1,6 +1,8 @@
 package commands
 
-import "log"
+import (
+	"log"
+)
 
 type ICommand interface {
 	Execute() interface{}
@@ -36,4 +38,15 @@ func (r CommandMinus) Execute() interface{} {
 	var res = r.A - r.B
 	log.Println("Exec command minus", res)
 	return res
+}
+
+type TestCommand struct {
+	Info string
+}
+
+func (r TestCommand) Execute() interface{} {
+	return "Test command Executed"
+}
+
+type CommandStop struct {
 }
