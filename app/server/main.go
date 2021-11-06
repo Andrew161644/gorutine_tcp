@@ -1,16 +1,14 @@
 package main
 
 import (
+	"tcp/app/config"
 	"tcp/app/connections_core"
-	"tcp/app/connections_core/config"
 )
 
 func main() {
+	var getConfig, _ = config.GetConfig()
 	var server = connections_core.ConnectionsCore{}
-	server.StartConnections(config.Config{
-		Port:             ":8081",
-		ConnectionsCount: "4",
-	})
+	server.StartConnections(*getConfig)
 	var ch = make(chan string)
 	<-ch
 }

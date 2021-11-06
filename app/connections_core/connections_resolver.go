@@ -3,14 +3,14 @@ package connections_core
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/nu7hatch/gouuid"
+	uuid "github.com/nu7hatch/gouuid"
 	"log"
 	"net"
 	"strconv"
 	"strings"
 	"tcp/app/agents_core/agents"
 	"tcp/app/agents_core/resolvers"
-	"tcp/app/connections_core/config"
+	"tcp/app/config"
 )
 
 type IConn interface {
@@ -31,29 +31,30 @@ func (con *ConnectionsCore) StartConnections(config config.Config) {
 		Agents:      make(map[string]agents.IAgent),
 	}
 
-	StartAgentResolver(con)
+	StartAgentResolver(con, config)
 
 	log.Println("Launching server...")
 	var connCount, _ = strconv.Atoi(config.ConnectionsCount)
 	con.Connections = make(map[int]*chan int, connCount)
-
 	var port = config.Port
-
 	ln, _ := net.Listen("tcp", port)
-
 	go StartConnectionAsync(connCount, con, ln)
-
 }
 
-func StartAgentResolver(con *ConnectionsCore) {
+func StartAgentResolver(con *ConnectionsCore, conf config.Config) {
 
 	go con.AgentResolver.Start(resolvers.Config{})
-	u, _ := uuid.NewV4()
+	for _, name := range conf.AgentsNames {
 
-	con.AgentResolver.AddAgent(agents.TestAgent{Agent: &agents.Agent{
-		Id:   u.String(),
-		Stop: make(chan struct{}),
-	}})
+		if name == "TestAgent" {
+			u, _ := uuid.NewV4()
+			con.AgentResolver.AddAgent(agents.TestAgent{Agent: &agents.Agent{
+				Id:   u.String(),
+				Stop: make(chan struct{}),
+			}})
+		}
+
+	}
 }
 
 func StartConnectionAsync(goroutineCountAvailable int, con *ConnectionsCore, ln net.Listener) {
@@ -104,6 +105,7 @@ func StartConnectionAsync(goroutineCountAvailable int, con *ConnectionsCore, ln 
 				log.Printf("Goroutine available %d", goroutineCountAvailable)
 
 			}(con.Connections, ln, goroutineCountAvailable)
+
 			goroutineCountAvailable--
 			log.Printf("Goroutine available %d", goroutineCountAvailable)
 		}
